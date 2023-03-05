@@ -5,9 +5,9 @@ const MONGO_DB = process.env.MONGO_DB || 'todos';
 
 let db = null;
 let collection = null;
-export class DB {
+export default class DB {
     connect() {
-        return MongoClient.connect(url)
+        return MongoClient.connect(MONGO_URI)
             .then(function (client) {
                 db = client.db(MONGO_DB);
                 collection = db.collection('todos');

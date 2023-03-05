@@ -1,6 +1,7 @@
 import express from 'express';
+import DB from './db.js'
 
-import { DB } from './db';
+const PORT = process.env.PORT || 3000;
 
 /** Zentrales Objekt für unsere Express-Applikation */
 const app = express();
@@ -15,12 +16,18 @@ async function initDB() {
 }
 
 // implement API routes
-app.get('/todos', (req, res) => {
-    let todos = db.queryAll();
+
+/** Return all todos. 
+ *  Be aware that the db methods return promises, so we need to use either `await` or `then` here! 
+ */
+app.get('/todos', async (req, res) => {
+    let todos = await db.queryAll();
     res.send(todos);
 });
 
-// Your code here
+//
+// YOUR CODE HERE
+//
 // Implement the following routes:
 // GET /todos/:id
 // POST /todos
@@ -30,8 +37,8 @@ app.get('/todos', (req, res) => {
 
 initDB()
     .then(() => {
-        app.listen(3000, () => {
-            console.log("Server listening on port 3000");
+        app.listen(PORT, () => {
+            console.log(`Server listening on port ${PORT}`);
         })
     })
 
