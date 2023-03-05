@@ -46,3 +46,16 @@ npm install mongodb
 ```
 
 In der Datei `backend/src/db.js` finden Sie eine Klasse DB, die eine Verbindung zur Datenbank herstellt und die CRUD-Operationen auf der Collection `todos` implementiert. Die Klasse DB wird in der Datei `backend/src/app.js` importiert und verwendet.
+
+### Aufgabe 2.1: Implementieren Sie die fehlenden Datenbank-Methoden
+
+Die Methode `DB.queryAll()` ist bereits implementiert. Implementieren Sie analog die fehlenden Methoden für die übrigen CRUD-Operationen analog zu `DB.queryAll()`.
+Die Methoden können jeweils ein `Promise` zurückgeben. Mit den entsprechenden Methoden des Mongo-Treibers (s. [Dokumentation](https://www.mongodb.com/docs/drivers/node/current/)) handelt es sich jeweils um wenige Zeilen.
+
+### Aufgabe 2.2: Implementieren Sie die fehlenden REST-Endpoints
+
+Der REST-Endpoint `GET /todos` ist bereits implementiert. Implementieren Sie analog die fehlenden REST-Endpoints für die übrigen CRUD-Operationen analog zu `GET /todos`.
+
+### Aufgabe 2.3: Testen Sie die REST-Endpoints
+
+Testen Sie die REST-Endpoints mit Hilfe von [Postman](https://www.postman.com/) oder einem anderen REST-Client.
