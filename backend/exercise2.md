@@ -2,9 +2,11 @@
 
 ## Aufgabe 1: Beispiel-Todos importieren
 
-In der Datei `todos.json` befinden sich zwei Beispiel-Todos. Zunächst wollen wir diese importieren:
+Bevor wir mit der Implementierung des Backends beginnen, initialisieren wir die Datenbank mit einigen Beispiel-Todos. Dazu erstellen wir eine neue Datenbank `todos` und eine neue Collection `todos`.
 
-```Shell
+In der Datei `todos.json` befinden sich dazu zwei Beispiel-Todos. Zunächst wollen wir diese importieren und dabei die Datenbank und die Collection anlegen. Dazu verwenden wir den Befehl `mongoimport`:
+
+```MongoDB
 mongoimport -c todos --jsonArray --file todos.json --db todos
 ```
 
@@ -34,3 +36,13 @@ test> db.todos.find()
 
 test>
 ```
+
+## Aufgabe 2: ToDo-Objekte in der Datenbank speichern
+
+Zunächst installieren wir den Node.js Treiber für MongoDB:
+
+```bash
+npm install mongodb
+```
+
+In der Datei `backend/src/db.js` finden Sie eine Klasse DB, die eine Verbindung zur Datenbank herstellt und die CRUD-Operationen auf der Collection `todos` implementiert. Die Klasse DB wird in der Datei `backend/src/app.js` importiert und verwendet.

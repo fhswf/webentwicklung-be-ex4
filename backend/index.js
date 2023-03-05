@@ -1,26 +1,37 @@
 import express from 'express';
 
+import { DB } from './db';
+
 /** Zentrales Objekt für unsere Express-Applikation */
 const app = express();
 
-/**
- * Liste aller ToDos. 
- * Wird später durch Datenbank ersetzt!
- */
-let TODOS = [
-    {
-        "id": 1671056616571,
-        "title": "Übung 4 machen",
-        "due": "2022-11-12T00:00:00.000Z",
-        "status": 0
-    },
-    {
-        "id": 1671087245763,
-        "title": "Für die Klausur Webentwicklung lernen",
-        "due": "2023-01-14T00:00:00.000Z",
-        "status": 2
-    },
-];
+/** global instance of our database */
+let db = new DB();
+
+/** Initialize database connection */
+async function initDB() {
+    await db.connect();
+    console.log("Connected to database");
+}
+
+// implement API routes
+app.get('/todos', (req, res) => {
+    let todos = db.queryAll();
+    res.send(todos);
+});
 
 // Your code here
-console.log('Hier ist alles anders'bhhhhhhhhhhhhb)
+// Implement the following routes:
+// GET /todos/:id
+// POST /todos
+// PUT /todos/:id
+// DELETE /todos/:id
+
+
+initDB()
+    .then(() => {
+        app.listen(3000, () => {
+            console.log("Server listening on port 3000");
+        })
+    })
+
