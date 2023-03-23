@@ -20,11 +20,11 @@
 		}
 	},
 	"features": {
-		"ghcr.io/devcontainers-contrib/features/jshint:2": {}
+	//	"ghcr.io/devcontainers-contrib/features/jshint:2": {}
 	}
 
 	// Use 'forwardPorts' to make a list of ports inside the container available locally.
-	// "forwardPorts": [3000, 27017],
+	"forwardPorts": [3000, 27017],
 
 	// Use 'postCreateCommand' to run commands after the container is created.
 	// "postCreateCommand": "yarn install",
