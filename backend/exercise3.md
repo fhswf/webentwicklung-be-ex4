@@ -24,3 +24,17 @@ sequenceDiagram
     Frontend->>Backend: DELETE /todos/4711
     Note right of Backend: Authorization via <br>JSON Web Token
 ```
+
+## Keycloak-Server auf jupiter.fh-swf.de
+
+Für das Praktikum ist auf jupiter.fh-swf.de ein Keycloak-Server mit der Realm `webentwicklung` eingerichtet. Dort gibt es einen Benutzer `public` mit dem Passwort `todo`.
+Ein JSON Web Token für diesen Benutzer kann wie folgt mithilfe von `curl` abgerufen werden:
+
+```shell
+curl --location --request POST 'https://jupiter.fh-swf.de/keycloak/realms/webentwicklung/protocol/openid-connect/token' \
+     --header 'Authorization: Basic dG9kby1iYWNrZW5kOnlpa2pBUk1KRFMyY0RLRXQ5cnZkRlc3ODFWOGpPcDZZ' \
+     --header 'Content-Type: application/x-www-form-urlencoded' \
+     --data-urlencode 'grant_type=password' \
+     --data-urlencode 'username=public' \
+     --data-urlencode 'password=todo'
+```
