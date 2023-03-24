@@ -38,3 +38,24 @@ curl --location --request POST 'https://jupiter.fh-swf.de/keycloak/realms/webent
      --data-urlencode 'username=public' \
      --data-urlencode 'password=todo'
 ```
+
+Der zugehörige Public Key, mit der die JWTs signiert sind, lautet 
+```
+MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAyn2vP592Ju/iKXQW1DCrSTXyQXyo11Qed1SdzFWC+mRtdgioKibzYMBt2MfAJa6YoyrVNgOtGvK659MjHALtotPQGmis1VVvBeMFdfh+zyFJi8NPqgBTXz6bQfnu85dbxVAg95J+1Ud0m4IUXME1ElOyp1pi88+w0C6ErVcFCyEDS3uAajBY6vBIuPrlokbl6RDcvR9zX85s+R/s7JeP1XV/e8gbnYgZwxcn/6+7moHPDl4LqvVDKnDq9n4W6561s8zzw8EoAwwYXUC3ZPe2/3DcUCh+zTF2nOy8HiN808CzqLq1VeD13q9DgkAmBWFNSaXb6vK6RIQ9+zr2cwdXiwIDAQAB
+```
+
+## Aufgabe 1: Autorisierung der API-Zugriffe via JWT
+
+In dieser Aufgabe sollen die Zugriffe auf das API vor unberechtigten Zugriffen geschützt werden.
+
+### Aufgabe 1.1: Installation und Konfiguration von Passport.js
+
+Installieren Sie `passport` und `passport-jwt`. Konfigurieren Sie Passport so, dass JWTs wahlweise als *Bearer Token* oder in einem Cookie gesendet werden können.
+
+### Aufgabe 1.2: Erweiterung des Datenmodells
+
+Sobald Zugriffe mit einem Benutzer erfolgen, ist es sinnvoll, den Benutzer mit in die MongoDB aufzunehmen (warum ist das so?). Erweitern Sie die Datenbankzugriffe so, dass ein Zugriff auf "fremde" Todos verboten ist und mit einem HTTP-Status 403 (*Forbidden*) beantwortet wird.
+
+## Aufgabe 2: Test der Zugriffe
+
+Testen Sie sowohl erlaubte als auch nicht erlaubte Zugriffe mit dem Tool `postman`.
