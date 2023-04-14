@@ -96,18 +96,18 @@ const swaggerOptions = {
           },
         },
       },
-      securitySchemes: {
-        bearerAuth: {
-          type: 'http',
-          scheme: 'bearer',
-          bearerFormat: 'JWT',
-        }
+    },
+    securitySchemes: {
+      bearerAuth: {
+        type: 'http',
+        scheme: 'bearer',
+        bearerFormat: 'JWT',
       }
     },
-    security: [{
-      bearerAuth: []
-    }]
   },
+  security: [{
+    bearerAuth: []
+  }]
   // ...
 };
 ```
