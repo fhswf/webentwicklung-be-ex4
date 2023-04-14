@@ -123,5 +123,7 @@ const swaggerOptions = {
 Wenn Sie alles richtig gemacht haben, sollten Sie über das Swagger-UI die `GET` Methode für `/todos` aufrufen können:
 ![](screenshot_swagger.png)
 
+**Dazu müssen Sie zunächst wieder ein *Bearer-Token* generieren (s. Aufgabe vom letzten Mal) und sich über den Button *Authorize* anmelden.**
+
 Mit diesen Schritten haben Sie eine grundlegende Swagger-Dokumentation für Ihre Express.js REST API erstellt. Sie können die Dokumentation weiter anpassen, indem Sie mehr Kommentare und Schemas für Ihre API-Endpunkte hinzufügen. Weitere Informationen finden Sie in der offiziellen [Swagger-OpenAPI-Dokumentation](https://swagger.io/specification/).
 
