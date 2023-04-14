@@ -4,6 +4,8 @@ import DB from './db.js'
 import swaggerUi from 'swagger-ui-express';
 import swaggerJsdoc from 'swagger-jsdoc';
 
+import { check, validationResult } from 'express-validator';
+
 const swaggerOptions = {
     swaggerDefinition: {
         openapi: '3.0.0',
@@ -73,6 +75,15 @@ async function initDB() {
     await db.connect();
     console.log("Connected to database");
 }
+
+
+const todoValidationRules = [
+    check('title')
+        .notEmpty()
+        .withMessage('Titel darf nicht leer sein')
+        .isLength({ min: 3 })
+        .withMessage('Titel muss mindestens 3 Zeichen lang sein'),
+];
 
 // implement API routes
 
