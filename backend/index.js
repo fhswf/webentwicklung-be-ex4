@@ -22,11 +22,17 @@ const swaggerOptions = {
                 Todo: {
                     type: 'object',
                     properties: {
+                        _id: {
+                            type: 'string',
+                            example: '6439519dadb77c080671a573',
+                        },
                         title: {
                             type: 'string',
+                            example: 'Für die Klausur Webentwicklung lernen',
                         },
                         due: {
                             type: 'string',
+                            example: '2023-01-14T00:00:00.000Z',
                         },
                         status: {
                             type: 'integer',
