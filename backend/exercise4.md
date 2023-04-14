@@ -1,4 +1,4 @@
-# Dokumentation mit OpenAPI / Swagger
+# Dokumentation mit Swagger & Validierung
 
 ## Aufgabe 1: Swagger-Dokumentation für das REST-API
 
@@ -85,17 +85,11 @@ const swaggerOptions = {
       Todo: {
         type: 'object',
         properties: {
-          _id: {
-            type: 'string',
-            example: '6439519dadb77c080671a573',
-          },
           title: {
             type: 'string',
-            example: 'Für die Klausur Webentwicklung lernen',
           },
           due: {
             type: 'string',
-            example: '2023-01-14T00:00:00.000Z',
           },
           status: {
             type: 'integer',
@@ -120,10 +114,59 @@ const swaggerOptions = {
 
 8. Starten Sie Ihre Anwendung, und öffnen Sie `http://localhost:3000/api-docs` in Ihrem Browser, um die Swagger-Dokumentation zu sehen.
 
-Wenn Sie alles richtig gemacht haben, sollten Sie über das Swagger-UI die `GET` Methode für `/todos` aufrufen können:
-![](screenshot_swagger.png)
-
-**Dazu müssen Sie zunächst wieder ein *Bearer-Token* generieren (s. Aufgabe vom letzten Mal) und sich über den Button *Authorize* anmelden.**
-
 Mit diesen Schritten haben Sie eine grundlegende Swagger-Dokumentation für Ihre Express.js REST API erstellt. Sie können die Dokumentation weiter anpassen, indem Sie mehr Kommentare und Schemas für Ihre API-Endpunkte hinzufügen. Weitere Informationen finden Sie in der offiziellen [Swagger-OpenAPI-Dokumentation](https://swagger.io/specification/).
 
+
+## Aufgabe 2: Validierung der Daten
+
+Gehen Sie wie folgt vor, um `express-validator` zur Überprüfung der Daten in Ihrem REST API zu verwenden:
+
+1. Installieren Sie das Paket `express-validator`:
+
+```bash
+npm install express-validator
+```
+
+2. Importieren Sie `express-validator` in der Datei, in der Sie Ihre Routen definieren (z.B. `todos.js`):
+
+```javascript
+const { check, validationResult } = require('express-validator');
+```
+
+3. Fügen Sie Validierungsregeln für die gewünschten Routen hinzu. Zum Beispiel, um die Titel bei der Erstellung eines neuen Todos zu validieren, fügen Sie die folgenden Regeln hinzu:
+
+```javascript
+const todoValidationRules = [
+  check('title')
+    .notEmpty()
+    .withMessage('Titel darf nicht leer sein')
+    .isLength({ min: 3 })
+    .withMessage('Titel muss mindestens 3 Zeichen lang sein'),
+];
+```
+
+4. Fügen Sie die Validierungsregeln als Middleware in Ihren Routen hinzu:
+
+```javascript
+app.post('/todos', todoValidationRules, async (req, res) => {
+  // ...
+});
+```
+
+5. Überprüfen Sie, ob Validierungsfehler aufgetreten sind, und senden Sie gegebenenfalls eine Fehlerantwort:
+
+```javascript
+app.post('/todos', todoValidationRules, async (req, res) => {
+  const errors = validationResult(req);
+  if (!errors.isEmpty()) {
+    return res.status(422).json({ errors: errors.array() });
+  }
+
+  // Ihre Logik zum Erstellen eines neuen Todos
+});
+```
+
+In diesem Beispiel haben wir die Validierung des Titels beim Erstellen eines neuen Todos hinzugefügt. 
+**Erstellen Sie weitere Validierungsregeln für andere Routen und fügen Sie sie entsprechend hinzu.**
+
+Weitere Informationen und Beispiele zur Verwendung von `express-validator` finden Sie in der offiziellen [Dokumentation](https://express-validator.github.io/docs/).
