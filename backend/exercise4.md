@@ -13,8 +13,8 @@ npm install swagger-ui-express swagger-jsdoc
 2. Importieren Sie die Pakete in Ihrer Express-Anwendung (`index.js`):
 
 ```javascript
-const swaggerUi = require('swagger-ui-express');
-const swaggerJsdoc = require('swagger-jsdoc');
+import swaggerUi from 'swagger-ui-express';
+import swaggerJsdoc from 'swagger-jsdoc';
 ```
 
 3. Erstellen Sie die Swagger-Options:
@@ -85,11 +85,17 @@ const swaggerOptions = {
       Todo: {
         type: 'object',
         properties: {
+          _id: {
+            type: 'string',
+            example: '6439519dadb77c080671a573',
+          },
           title: {
             type: 'string',
+            example: 'Für die Klausur Webentwicklung lernen',
           },
           due: {
             type: 'string',
+            example: '2023-01-14T00:00:00.000Z',
           },
           status: {
             type: 'integer',
@@ -114,4 +120,8 @@ const swaggerOptions = {
 
 8. Starten Sie Ihre Anwendung, und öffnen Sie `http://localhost:3000/api-docs` in Ihrem Browser, um die Swagger-Dokumentation zu sehen.
 
+Wenn Sie alles richtig gemacht haben, sollten Sie über das Swagger-UI die `GET` Methode für `/todos` aufrufen können:
+![](screenshot_swagger.png)
+
 Mit diesen Schritten haben Sie eine grundlegende Swagger-Dokumentation für Ihre Express.js REST API erstellt. Sie können die Dokumentation weiter anpassen, indem Sie mehr Kommentare und Schemas für Ihre API-Endpunkte hinzufügen. Weitere Informationen finden Sie in der offiziellen [Swagger-OpenAPI-Dokumentation](https://swagger.io/specification/).
+
