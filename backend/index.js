@@ -4,7 +4,27 @@ import DB from './db.js'
 import swaggerUi from 'swagger-ui-express';
 import swaggerJsdoc from 'swagger-jsdoc';
 
+import passport from 'passport';
+import { Strategy as JwtStrategy, ExtractJwt } from 'passport-jwt';
+
 import { check, validationResult } from 'express-validator';
+
+// Passport.js JWT-Strategie
+const opts = {
+    jwtFromRequest: (req) => {
+        let token = ExtractJwt.fromAuthHeaderAsBearerToken()(req);
+        console.log("token: %s", token)
+        return token
+    },
+    secretOrKey: `-----BEGIN PUBLIC KEY-----
+MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAyn2vP592Ju/iKXQW1DCrSTXyQXyo11Qed1SdzFWC+mRtdgioKibzYMBt2MfAJa6YoyrVNgOtGvK659MjHALtotPQGmis1VVvBeMFdfh+zyFJi8NPqgBTXz6bQfnu85dbxVAg95J+1Ud0m4IUXME1ElOyp1pi88+w0C6ErVcFCyEDS3uAajBY6vBIuPrlokbl6RDcvR9zX85s+R/s7JeP1XV/e8gbnYgZwxcn/6+7moHPDl4LqvVDKnDq9n4W6561s8zzw8EoAwwYXUC3ZPe2/3DcUCh+zTF2nOy8HiN808CzqLq1VeD13q9DgkAmBWFNSaXb6vK6RIQ9+zr2cwdXiwIDAQAB
+-----END PUBLIC KEY-----`,
+    ignoreExpiration: true,
+    issuer: "https://jupiter.fh-swf.de/keycloak/realms/webentwicklung"
+};
+
+
+
 
 const swaggerOptions = {
     swaggerDefinition: {
@@ -63,9 +83,21 @@ const PORT = process.env.PORT || 3000;
 /** Zentrales Objekt für unsere Express-Applikation */
 const app = express();
 
+
+
 /** Middleware für Swagger */
 const swaggerDocs = swaggerJsdoc(swaggerOptions);
 app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerDocs));
+passport.use(
+    new JwtStrategy(opts, (payload, done) => {
+        // Hier können Sie zusätzliche Validierungen oder Benutzerabfragen durchführen, falls erforderlich
+        console.log("JWT payload: %o", payload)
+        return done(null, payload);
+    })
+);
+app.use(passport.initialize());
+
+
 
 /** global instance of our database */
 let db = new DB();
@@ -104,10 +136,12 @@ const todoValidationRules = [
  *              items:
  *                $ref: '#/components/schemas/Todo'
  */
-app.get('/todos', async (req, res) => {
-    let todos = await db.queryAll();
-    res.send(todos);
-});
+app.get('/todos',
+    passport.authenticate('jwt', { session: false }),
+    async (req, res) => {
+        let todos = await db.queryAll();
+        res.send(todos);
+    });
 
 //
 // YOUR CODE HERE
