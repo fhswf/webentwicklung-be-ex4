@@ -1,6 +1,10 @@
 
+
 let todos = [];
 const status = ["offen", "in Bearbeitung", "erledigt"];
+
+const API = "/todos"
+const LOGIN_URL = "https://jupiter.fh-swf.de/keycloak/realms/webentwicklung/protocol/openid-connect/auth"
 
 function createTodoElement(todo) {
     let list = document.getElementById("todo-list");
@@ -38,9 +42,9 @@ function initForm(event) {
     event.target.due.valueAsDate = new Date(Date.now() + 3 * 86400000);
 }
 
-function init() {
+async function init() {
     // Get todos from loacal storage
-    todos = loadTodos();
+    todos = await loadTodos();
     console.log("Loaded todos: %o", todos);
 
     // Reset the form
@@ -111,12 +115,29 @@ function changeStatus(id) {
 }
 
 function loadTodos() {
-    let todos = localStorage.getItem("todos");
-    if (todos) {
-        return JSON.parse(todos);
-    } else {
-        return [];
-    }
+    return fetch(API)
+        .then(response => {
+            if (response.status == 401) {
+                console.log("GET %s returned 401, need to log in", API)
+                let params = new URLSearchParams()
+                params.append("response_type", "code")
+                params.append("redirect_uri", new URL("/oauth_callback", window.location))
+                params.append("client_id", "todo-backend")
+                params.append("scope", "openid")
+                // ?response_type=code&redirect_uri=https%3A%2F%2Fwww.ki.fh-swf.de%2Fjupyterhub%2Foauth_callback&client_id=jupyterhub&state=eyJzdGF0ZV9pZCI6ICIxYTI1MzRlMjc2NTk0ZTc3OTM3NjJkNzY1YTRiNzc1MiIsICJuZXh0X3VybCI6ICIifQ%3D%3D&scope=openid"
+
+                // redirect to login URL with proper parameters
+                window.location = LOGIN_URL + "?" + params.toString()
+            }
+            else return response.json()
+        })
+        .then(response => {
+            console.log("GET %s: %o", API, response)
+            return response
+        })
+        .catch(err => {
+            console.log("GET %s failed: %o", API, err)
+        })
 }
 
 function saveTodos() {

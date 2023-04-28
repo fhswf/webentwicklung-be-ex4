@@ -8,11 +8,17 @@ import passport from 'passport';
 import { Strategy as JwtStrategy, ExtractJwt } from 'passport-jwt';
 
 import { check, validationResult } from 'express-validator';
+import cookieParser from 'cookie-parser';
 
 // Passport.js JWT-Strategie
 const opts = {
     jwtFromRequest: (req) => {
         let token = ExtractJwt.fromAuthHeaderAsBearerToken()(req);
+        if (!token) {
+            if (req.cookies.token) {
+                token = req.cookies.token
+            }
+        }
         console.log("token: %s", token)
         return token
     },
@@ -23,7 +29,7 @@ MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAyn2vP592Ju/iKXQW1DCrSTXyQXyo11Qed1Sd
     issuer: "https://jupiter.fh-swf.de/keycloak/realms/webentwicklung"
 };
 
-
+const TOKEN_URL = "https://jupiter.fh-swf.de/keycloak/realms/webentwicklung/protocol/openid-connect/token"
 
 
 const swaggerOptions = {
@@ -83,7 +89,8 @@ const PORT = process.env.PORT || 3000;
 /** Zentrales Objekt für unsere Express-Applikation */
 const app = express();
 
-
+app.use(cookieParser())
+app.use(express.static('../frontend'));
 
 /** Middleware für Swagger */
 const swaggerDocs = swaggerJsdoc(swaggerOptions);
@@ -142,6 +149,43 @@ app.get('/todos',
         let todos = await db.queryAll();
         res.send(todos);
     });
+
+/** Endpoint for OpenID connect callback */
+app.get('/oauth_callback', async (req, res) => {
+    let code = req.query.code
+    let state = req.query.session_state
+    console.log("oauth_callback: code: %s, state: %s", code, state)
+    let data = new URLSearchParams()
+    data.append("client_id", "todo-backend")
+    data.append("grant_type", "authorization_code")
+    data.append("code", code)
+    data.append("redirect_uri", "http://localhost:3000/oauth_callback")
+    fetch(TOKEN_URL, {
+        method: "POST",
+        body: data
+    })
+        .then(response => {
+            if (response.status != 200) {
+                console.log("token endpoint faild with status %s, %j", response.status, response.body)
+                res.sendStatus(response.status)
+                throw (response)
+            }
+            else return response.json()
+        })
+        .then(response => {
+            console.log("token endpoint: %j", response)
+            let token = response.access_token
+            res.cookie("token", token, { maxAge: 900000, httpOnly: true })
+            res.setHeader("Location", "/todo.html")
+            res.sendStatus(301)
+        })
+        .catch(err => {
+            console.log("token endpoint failed: %j", err)
+            if (!res.headersSent)
+                res.sendStatus(500)
+        })
+
+})
 
 //
 // YOUR CODE HERE
