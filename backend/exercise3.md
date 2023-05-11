@@ -32,12 +32,14 @@ Ein JSON Web Token für diesen Benutzer kann wie folgt mithilfe von `curl` abger
 
 ```shell
 curl --location --request POST 'https://jupiter.fh-swf.de/keycloak/realms/webentwicklung/protocol/openid-connect/token' \
-     --header 'Authorization: Basic dG9kby1iYWNrZW5kOnlpa2pBUk1KRFMyY0RLRXQ5cnZkRlc3ODFWOGpPcDZZ' \
      --header 'Content-Type: application/x-www-form-urlencoded' \
      --data-urlencode 'grant_type=password' \
+     --data-urlencode 'client_id=todo-backend' \
      --data-urlencode 'username=public' \
      --data-urlencode 'password=todo'
 ```
+
+
 
 Der zugehörige Public Key, mit der die JWTs signiert sind, lautet 
 ```
