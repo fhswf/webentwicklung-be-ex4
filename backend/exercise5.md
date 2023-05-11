@@ -35,7 +35,7 @@ Dazu gehen wir wie folgt vor:
     
     Um Sicherzustellen, dass ein Login wirklich von der "richtigen" Anwendung initiiert wurde, verwendet OpenID Connect einen `state` Parameter.  
    
-## Aufgabe 1.1: Implementierung des Logins Frontend
+## Aufgabe 1.1: Implementierung des Logins im Frontend
 
 Sorgen Sie zunächst dafür, dass Sie die Dateien aus dem Frontend über Ihren Node-Server aufrufen können (das ist wichtig, um CORS-Probleme zu vermeiden und damit wir möglichst einfach die passenden URLs bilden können):
 ```Javascript
