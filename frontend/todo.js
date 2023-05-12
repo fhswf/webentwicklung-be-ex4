@@ -116,27 +116,15 @@ function changeStatus(id) {
 
 function loadTodos() {
     return fetch(API)
-        .then(response => {
-            if (response.status == 401) {
-                console.log("GET %s returned 401, need to log in", API)
-                let params = new URLSearchParams()
-                params.append("response_type", "code")
-                params.append("redirect_uri", new URL("/oauth_callback", window.location))
-                params.append("client_id", "todo-backend")
-                params.append("scope", "openid")
-                // ?response_type=code&redirect_uri=https%3A%2F%2Fwww.ki.fh-swf.de%2Fjupyterhub%2Foauth_callback&client_id=jupyterhub&state=eyJzdGF0ZV9pZCI6ICIxYTI1MzRlMjc2NTk0ZTc3OTM3NjJkNzY1YTRiNzc1MiIsICJuZXh0X3VybCI6ICIifQ%3D%3D&scope=openid"
-
-                // redirect to login URL with proper parameters
-                window.location = LOGIN_URL + "?" + params.toString()
-            }
-            else return response.json()
-        })
+        .then(checkLogin)
+        .then(response => response.json())
         .then(response => {
             console.log("GET %s: %o", API, response)
             return response
         })
         .catch(err => {
             console.log("GET %s failed: %o", API, err)
+            return []
         })
 }
 
@@ -144,3 +132,32 @@ function saveTodos() {
     localStorage.setItem("todos", JSON.stringify(todos));
 }
 
+/** Check whether we need to login.
+ * Check the status of a response object. If the status is 401, construct an appropriate 
+ * login URL and redict there.
+ * 
+ * @param response Response object to check
+ * @returns original response object if status is not 401
+ */
+function checkLogin(response) {
+    // check if we need to login
+    if (response.status == 401) {
+        console.log("GET %s returned 401, need to log in", API)
+        let state = document.cookie
+            .split('; ')
+            .find((row) => row.startsWith("state="))
+            ?.split("=")[1]
+        console.log("state: %s", state)
+        let params = new URLSearchParams()
+        params.append("response_type", "code")
+        params.append("redirect_uri", new URL("/oauth_callback", window.location))
+        params.append("client_id", "todo-backend")
+        params.append("scope", "openid")
+        params.append("state", state)
+
+        // redirect to login URL with proper parameters
+        window.location = LOGIN_URL + "?" + params.toString()
+        throw ("Need to log in")
+    }
+    else return response
+}
