@@ -44,7 +44,39 @@ describe('POST /todos', () => {
         expect(response.body.title).toBe(newTodo.title);
         expect(response.body.due).toBe(newTodo.due);
     });
-});
+
+    it('sollte einen 400-Fehler zurückgeben, wenn das Todo unvollständig ist', async () => {
+        const newTodo = {
+            "due": "2022-11-12T00:00:00.000Z",
+            "status": 0,
+        };
+
+        const response = await request(app)
+            .post('/todos')
+            .set('Authorization', `Bearer ${token}`)
+            .send(newTodo);
+
+        expect(response.statusCode).toBe(400);
+        expect(response.body.error).toBe('Bad Request');
+    });
+
+    it('sollte einen 400-Fehler zurückgeben, wenn das Todo nicht valide ist', async () => {
+        const newTodo = {
+            "title": "Übung 4 machen",
+            "due": "2022-11-12T00:00:00.000Z",
+            "status": 0,
+            "invalid": "invalid"
+        };
+
+        const response = await request(app)
+            .post('/todos')
+            .set('Authorization', `Bearer ${token}`)
+            .send(newTodo);
+
+        expect(response.statusCode).toBe(400);
+        expect(response.body.error).toBe('Bad Request');
+    });
+}); 0
 
 describe('GET /todos/:id', () => {
     it('sollte ein Todo abrufen', async () => {
@@ -68,6 +100,17 @@ describe('GET /todos/:id', () => {
         expect(getResponse.statusCode).toBe(200);
         expect(getResponse.body.title).toBe(newTodo.title);
         expect(getResponse.body.due).toBe(newTodo.due);
+    });
+
+    it('sollte einen 404-Fehler zurückgeben, wenn das Todo nicht gefunden wurde', async () => {
+        const id = '123456789012345678901234';
+
+        const getResponse = await request(app)
+            .get(`/todos/${id}`)
+            .set('Authorization', `Bearer ${token}`);
+
+        expect(getResponse.statusCode).toBe(404);
+        expect(getResponse.body.error).toMatch(/Todo with id .+ not found/);
     });
 });
 
@@ -128,6 +171,7 @@ describe('DELETE /todos/:id', () => {
         expect(getResponse.statusCode).toBe(404);
     });
 });
+
 
 afterAll(async () => {
     server.close()

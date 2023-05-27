@@ -252,7 +252,7 @@ app.get('/todos/:id', authenticate,
                 if (todo) {
                     res.send(todo);
                 } else {
-                    res.sendStatus(404);
+                    res.status(404).send({ error: `Todo with id ${id} not found` });
                 }
             })
             .catch(err => {
