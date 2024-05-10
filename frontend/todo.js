@@ -58,9 +58,11 @@ function saveTodo(evt) {
     evt.preventDefault();
 
     // Get the id from the form. If it is not set, we are creating a new todo.
-    let id = Number.parseInt(evt.target.dataset._id) || Date.now();
+    let id = evt.target.dataset._id || "";
+    console.log("Saving todo with id: %s", id);
 
     let todo = {
+        _id: id,
         title: evt.target.title.value,
         due: evt.target.due.valueAsDate,
         status: Number.parseInt(evt.target.status.value) || 0
@@ -81,7 +83,7 @@ function saveTodo(evt) {
                 return response.json()
             })
             .then(response => {
-                todo = response
+                todos[index] = response
                 console.log("Updated todo: %o", todo)
                 showTodos()
             })
@@ -111,10 +113,7 @@ function saveTodo(evt) {
                 console.log("POST %s failed: %o", API, err)
             })
     }
-
-    showTodos();
     evt.target.reset();
-    localStorage.setItem("todos", JSON.stringify(todos));
 }
 
 function editTodo(id) {
@@ -126,7 +125,7 @@ function editTodo(id) {
         form.due.valueAsDate = new Date(todo.due);
         form.status.value = todo.status;
         form.submit.value = "Änderungen speichern";
-        form.dataset.id = todo._id;
+        form.dataset._id = todo._id;
     }
 }
 
@@ -138,6 +137,7 @@ function deleteTodo(id) {
     })
         .then(response => {
             console.log("DELETE %s: %o", API + "/" + id, response)
+            if (response.status != 204) throw ("DELETE failed")
         })
         .then(response => {
             todos = todos.filter(t => t._id !== id)
@@ -150,7 +150,8 @@ function deleteTodo(id) {
 }
 
 function changeStatus(id) {
-    let todo = todos.find(t => t._id === id);
+    let index = todos.findIndex(t => t._id === id);
+    let todo = todos[index];
     console.log("Changing status of todo: %s, %o", id, todo);
     if (todo) {
         todo.status = (todo.status + 1) % status.length;
@@ -166,13 +167,14 @@ function changeStatus(id) {
                 return response.json()
             })
             .then(response => {
-                todo = response
+                todos[index] = response
                 console.log("Updated todo: %o", todo)
+                showTodos();
             })
             .catch(err => {
                 console.log("PUT %s failed: %o", API + "/" + id, err)
             })
-        showTodos();
+
     }
 }
 
@@ -190,9 +192,6 @@ function loadTodos() {
         })
 }
 
-function saveTodos() {
-    localStorage.setItem("todos", JSON.stringify(todos));
-}
 
 /** Check whether we need to login.
  * Check the status of a response object. If the status is 401, construct an appropriate 
