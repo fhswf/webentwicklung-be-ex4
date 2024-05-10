@@ -12,9 +12,9 @@ function createTodoElement(todo) {
     list.insertAdjacentHTML("beforeend",
         `<div>${todo.title}</div> 
          <div>${due.toLocaleDateString()}</div>
-         <button class="status" onclick="changeStatus(${todo.id})">${status[todo.status || 0]}</button>
-         <button class="edit" onclick="editTodo(${todo.id})">Bearbeiten</button>
-         <button class="delete" onclick="deleteTodo(${todo.id})">Löschen</button>`);
+         <button class="status" onclick="changeStatus('${todo._id}')">${status[todo.status || 0]}</button>
+         <button class="edit" onclick="editTodo('${todo._id}')">Bearbeiten</button>
+         <button class="delete" onclick="deleteTodo('${todo._id}')">Löschen</button>`);
 }
 
 function showTodos() {
@@ -58,22 +58,58 @@ function saveTodo(evt) {
     evt.preventDefault();
 
     // Get the id from the form. If it is not set, we are creating a new todo.
-    let id = Number.parseInt(evt.target.dataset.id) || Date.now();
+    let id = Number.parseInt(evt.target.dataset._id) || Date.now();
 
     let todo = {
-        id,
         title: evt.target.title.value,
         due: evt.target.due.valueAsDate,
         status: Number.parseInt(evt.target.status.value) || 0
     }
 
-    let index = todos.findIndex(t => t.id === todo.id);
+    let index = todos.findIndex(t => t._id === id);
     if (index >= 0) {
-        todos[index] = todo;
         console.log("Updating todo: %o", todo);
+        fetch(API + "/" + id, {
+            method: "PUT",
+            headers: {
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify(todo)
+        })
+            .then(response => {
+                console.log("PUT %s: %o", API + "/" + id, response)
+                return response.json()
+            })
+            .then(response => {
+                todo = response
+                console.log("Updated todo: %o", todo)
+                showTodos()
+            })
+            .catch(err => {
+                console.log("PUT %s failed: %o", API + "/" + id, err)
+            })
     } else {
-        todos.push(todo);
         console.log("Saving new todo: %o", todo);
+        fetch(API, {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify(todo)
+        })
+            .then(response => {
+                console.log("POST %s: %o", API, response)
+                return response.json()
+            })
+            .then(response => {
+                todo = response
+                console.log("Saved todo: %o", todo)
+                todos.push(todo);
+                showTodos();
+            })
+            .catch(err => {
+                console.log("POST %s failed: %o", API, err)
+            })
     }
 
     showTodos();
@@ -82,7 +118,7 @@ function saveTodo(evt) {
 }
 
 function editTodo(id) {
-    let todo = todos.find(t => t.id === id);
+    let todo = todos.find(t => t._id === id);
     console.log("Editing todo: %o", todo);
     if (todo) {
         let form = document.getElementById("todo-form");
@@ -90,27 +126,53 @@ function editTodo(id) {
         form.due.valueAsDate = new Date(todo.due);
         form.status.value = todo.status;
         form.submit.value = "Änderungen speichern";
-        form.dataset.id = todo.id;
+        form.dataset.id = todo._id;
     }
 }
 
 function deleteTodo(id) {
-    let todo = todos.find(t => t.id === id);
+    let todo = todos.find(t => t._id === id);
     console.log("Deleting todo: %o", todo);
-    if (todo) {
-        todos = todos.filter(t => t.id !== id);
-        showTodos();
-        saveTodos();
-    }
+    fetch(API + "/" + id, {
+        method: "DELETE"
+    })
+        .then(response => {
+            console.log("DELETE %s: %o", API + "/" + id, response)
+        })
+        .then(response => {
+            todos = todos.filter(t => t._id !== id)
+            console.log("Deleted todo: %o", response)
+            showTodos();
+        })
+        .catch(err => {
+            console.log("DELETE %s failed: %o", API + "/" + id, err)
+        })
 }
 
 function changeStatus(id) {
-    let todo = todos.find(t => t.id === id);
-    console.log("Changing status of todo: %o", todo);
+    let todo = todos.find(t => t._id === id);
+    console.log("Changing status of todo: %s, %o", id, todo);
     if (todo) {
         todo.status = (todo.status + 1) % status.length;
+        fetch(API + "/" + id, {
+            method: "PUT",
+            headers: {
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify(todo)
+        })
+            .then(response => {
+                console.log("PUT %s: %o", API + "/" + id, response)
+                return response.json()
+            })
+            .then(response => {
+                todo = response
+                console.log("Updated todo: %o", todo)
+            })
+            .catch(err => {
+                console.log("PUT %s failed: %o", API + "/" + id, err)
+            })
         showTodos();
-        saveTodos();
     }
 }
 
