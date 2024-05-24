@@ -129,6 +129,14 @@ const todoValidationRules = [
         .withMessage('Titel darf nicht leer sein')
         .isLength({ min: 3 })
         .withMessage('Titel muss mindestens 3 Zeichen lang sein'),
+    check('due')
+        .optional()
+        .isISO8601()
+        .withMessage('Ungültiges Datum'),
+    check('status')
+        .optional()
+        .isInt()
+        .withMessage('Status muss eine Zahl sein')
 ];
 
 
@@ -136,7 +144,7 @@ const todoValidationRules = [
 let authenticate = (req, res, next) => passport.authenticate('jwt',
     { session: false },
     (err, user, info) => {
-        //console.log("authenticate: %j %j %j", err, user, info)
+        console.log("authenticate: %j %j %j", err, user, info)
         if (!user) {
             let data = new Uint8Array(16);
             getRandomValues(data);
@@ -299,9 +307,15 @@ app.get('/todos/:id', authenticate,
  *    '500':
  *      description: Serverfehler
  */
-app.put('/todos/:id', authenticate,
+app.put('/todos/:id', authenticate, todoValidationRules,
     async (req, res) => {
         let id = req.params.id;
+        const result = validationResult(req);
+        console.log(result);
+        if (!result.isEmpty()) {
+            res.status(400).send(result.array());
+            return;
+        }
         let todo = req.body;
         if (todo._id !== id) {
             console.log("id in body does not match id in path: %s != %s", todo._id, id);
@@ -347,8 +361,14 @@ app.put('/todos/:id', authenticate,
  *     '500':
  *       description: Serverfehler
  */
-app.post('/todos', authenticate,
+app.post('/todos', authenticate, todoValidationRules,
     async (req, res) => {
+        const result = validationResult(req);
+        console.log(result);
+        if (!result.isEmpty()) {
+            res.status(400).send(result.array());
+            return;
+        }
         let todo = req.body;
         if (!todo) {
             res.sendStatus(400, { message: "Todo fehlt" });

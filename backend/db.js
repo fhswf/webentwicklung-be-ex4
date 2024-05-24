@@ -52,7 +52,7 @@ export default class DB {
         return collection
             .replaceOne({ _id }, todo)
             .then(result => {
-                if (result.modifiedCount === 1) {
+                if (result.modifiedCount === 1 || result.matchedCount === 1) {
                     return todo;
                 }
                 else {

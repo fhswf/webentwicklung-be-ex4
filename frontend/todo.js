@@ -69,7 +69,7 @@ function saveTodo(evt) {
     }
 
     let index = todos.findIndex(t => t._id === id);
-    if (index >= 0) {
+    if (id && index >= 0) {
         console.log("Updating todo: %o", todo);
         fetch(API + "/" + id, {
             method: "PUT",
@@ -80,6 +80,7 @@ function saveTodo(evt) {
         })
             .then(response => {
                 console.log("PUT %s: %o", API + "/" + id, response)
+                if (response.status != 200) throw response;
                 return response.json()
             })
             .then(response => {
@@ -89,6 +90,11 @@ function saveTodo(evt) {
             })
             .catch(err => {
                 console.log("PUT %s failed: %o", API + "/" + id, err)
+                return err.json()
+            })
+            .then(err => {
+                console.log("Error: %o", err)
+                alert("Fehler beim Speichern des Todos: " + err.map(f => f.msg) + "\nBitte versuchen Sie es erneut.")
             })
     } else {
         console.log("Saving new todo: %o", todo);
@@ -101,6 +107,7 @@ function saveTodo(evt) {
         })
             .then(response => {
                 console.log("POST %s: %o", API, response)
+                if (response.status != 201) throw response;
                 return response.json()
             })
             .then(response => {
@@ -111,6 +118,11 @@ function saveTodo(evt) {
             })
             .catch(err => {
                 console.log("POST %s failed: %o", API, err)
+                return err.json()
+            })
+            .then(err => {
+                console.log("Error: %o", err)
+                alert("Fehler beim Speichern des Todos: " + err.map(f => f.msg) + "\nBitte versuchen Sie es erneut.")
             })
     }
     evt.target.reset();
