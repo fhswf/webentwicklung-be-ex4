@@ -4,7 +4,7 @@ let todos = [];
 const status = ["offen", "in Bearbeitung", "erledigt"];
 
 const API = "/todos"
-const LOGIN_URL = "https://jupiter.fh-swf.de/keycloak/realms/webentwicklung/protocol/openid-connect/auth"
+const LOGIN_URL = "https://keycloak.gawron.cloud/realms/webentwicklung/protocol/openid-connect/auth"
 
 function createTodoElement(todo) {
     let list = document.getElementById("todo-list");
@@ -191,6 +191,7 @@ function changeStatus(id) {
 }
 
 function loadTodos() {
+    console.log("loading todos")
     return fetch(API)
         .then(checkLogin)
         .then(response => response.json())

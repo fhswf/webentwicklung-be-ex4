@@ -29,13 +29,13 @@ const opts = {
         return token
     },
     secretOrKey: `-----BEGIN PUBLIC KEY-----
-MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAyn2vP592Ju/iKXQW1DCrSTXyQXyo11Qed1SdzFWC+mRtdgioKibzYMBt2MfAJa6YoyrVNgOtGvK659MjHALtotPQGmis1VVvBeMFdfh+zyFJi8NPqgBTXz6bQfnu85dbxVAg95J+1Ud0m4IUXME1ElOyp1pi88+w0C6ErVcFCyEDS3uAajBY6vBIuPrlokbl6RDcvR9zX85s+R/s7JeP1XV/e8gbnYgZwxcn/6+7moHPDl4LqvVDKnDq9n4W6561s8zzw8EoAwwYXUC3ZPe2/3DcUCh+zTF2nOy8HiN808CzqLq1VeD13q9DgkAmBWFNSaXb6vK6RIQ9+zr2cwdXiwIDAQAB
+MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEA3lj+kx6JNoTrFnAIs0S9iW6IsXWWdT5jabhNUc6puI1n63xjoJj8bYXhcv40ck6V6/5Vovaa/F+N8ZNpPbaaJTX8V6JSJc3zGEP7JRdOqskOeUTWiOABxEQOxp04l0QEef8aJY1vLhnqTxZabPKaVxws1+GuiieznvFNv1YsCogRuA1b5+s9bNjNUotnHd6JEMNt2O/2maDRoivRA2dxCuLT8HBE/aGBWoMrfhyj5EXvD4Pv46CJ2NUVByGps5DH2LGfu+P0VLyINfBpaaqLYha5+up1zkJ7tGm83hEzazkjvBAJ3/zoGHX7hWlTARwtrjdUAcgRRcLNaBQm4xZi6wIDAQAB
 -----END PUBLIC KEY-----`,
     ignoreExpiration: true,
-    issuer: "https://jupiter.fh-swf.de/keycloak/realms/webentwicklung"
+    issuer: "https://keycloak.gawron.cloud/realms/webentwicklung"
 };
 
-const TOKEN_URL = "https://jupiter.fh-swf.de/keycloak/realms/webentwicklung/protocol/openid-connect/token"
+const TOKEN_URL = "https://keycloak.gawron.cloud/realms/webentwicklung/protocol/openid-connect/token"
 
 
 const swaggerOptions = {
@@ -172,10 +172,12 @@ app.get('/oauth_callback', async (req, res) => {
         return
     }
     let data = new URLSearchParams()
+    const HOST = `${process.env.CODESPACE_NAME}-${PORT}.app.github.dev`
+    data.append("redirect_uri", `https://${HOST}/oauth_callback`)
     data.append("client_id", "todo-backend")
     data.append("grant_type", "authorization_code")
     data.append("code", code)
-    data.append("redirect_uri", "http://localhost:3000/oauth_callback")
+    
     fetch(TOKEN_URL, {
         method: "POST",
         body: data
