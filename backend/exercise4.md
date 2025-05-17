@@ -75,41 +75,56 @@ router.get('/todos', async (req, res) => {
 });
 ```
 
-7. Definieren Sie die Schemas für Ihre API-Objekte, indem Sie sie zu den `swaggerOptions` hinzufügen:
+7. Definieren Sie die Schemas für Ihre API-Objekte, indem Sie sie zu den `swaggerDefinitions` hinzufügen:
 
 ```javascript
-const swaggerOptions = {
-  // ...
-  components: {
-    schemas: {
-      Todo: {
-        type: 'object',
-        properties: {
-          title: {
-            type: 'string',
-          },
-          due: {
-            type: 'string',
-          },
-          status: {
-            type: 'integer',
-          },
+    swaggerDefinition: {
+        openapi: '3.0.0',
+        info: {
+            title: 'Todo API',
+            version: '1.0.0',
+            description: 'Todo API Dokumentation',
         },
-      },
-    },
-    securitySchemes: {
-      bearerAuth: {
-        type: 'http',
-        scheme: 'bearer',
-        bearerFormat: 'JWT',
-      }
-    },
-  },
-  security: [{
-    bearerAuth: []
-  }]
-  // ...
-};
+        servers: [
+            {
+                url: 'https://humble-doodle-vwrj4697r2pgp6-3000.app.github.dev/',
+            },
+        ],
+        components: {
+            schemas: {
+                Todo: {
+                    type: 'object',
+                    properties: {
+                        _id: {
+                            type: 'string',
+                            example: '6439519dadb77c080671a573',
+                        },
+                        title: {
+                            type: 'string',
+                            example: 'Für die Klausur Webentwicklung lernen',
+                        },
+                        due: {
+                            type: 'string',
+                            example: '2023-01-14T00:00:00.000Z',
+                        },
+                        status: {
+                            type: 'integer',
+                        },
+                    },
+                },
+            },
+            securitySchemes: {
+                bearerAuth: {
+                    type: 'http',
+                    scheme: 'bearer',
+                    bearerFormat: 'JWT',
+                }
+            },
+        },
+        security: [{
+            bearerAuth: []
+        }],
+
 ```
 
 8. Starten Sie Ihre Anwendung, und öffnen Sie `http://localhost:3000/api-docs` in Ihrem Browser, um die Swagger-Dokumentation zu sehen.
