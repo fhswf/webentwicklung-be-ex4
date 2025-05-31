@@ -78,6 +78,8 @@ In den Tests verwenden wir die Methoden `beforeAll` und `afterAll`, um die Daten
 ```javascript
 import { app, server, db } from '../index.js';
 
+let expressServer;
+
 beforeAll(async () => {
   expressServer = await server; // Ensure the server is started before tests
   console.log("Server started for testing");
@@ -112,10 +114,13 @@ beforeAll(async () => {
 
     ```javascript   
     import request from 'supertest';
-    import app from '../index.js'; 
+    import { app, server, db } from '../index.js';
+
+    let expressServer;
 
     beforeAll(async () => {
-        await initDB(); // Ensure the database is initialized before tests
+        expressServer = await server; // Ensure the server is started before tests
+        console.log("Server started for testing");
     });
 
     describe('GET /todos', () => {
