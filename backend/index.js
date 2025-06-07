@@ -25,11 +25,11 @@ const opts = {
                 token = req.cookies.token
             }
         }
-        //console.log("token: %s", token)
+        console.log("token: %s", token)
         return token
     },
     secretOrKey: `-----BEGIN PUBLIC KEY-----
-MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEA3lj+kx6JNoTrFnAIs0S9iW6IsXWWdT5jabhNUc6puI1n63xjoJj8bYXhcv40ck6V6/5Vovaa/F+N8ZNpPbaaJTX8V6JSJc3zGEP7JRdOqskOeUTWiOABxEQOxp04l0QEef8aJY1vLhnqTxZabPKaVxws1+GuiieznvFNv1YsCogRuA1b5+s9bNjNUotnHd6JEMNt2O/2maDRoivRA2dxCuLT8HBE/aGBWoMrfhyj5EXvD4Pv46CJ2NUVByGps5DH2LGfu+P0VLyINfBpaaqLYha5+up1zkJ7tGm83hEzazkjvBAJ3/zoGHX7hWlTARwtrjdUAcgRRcLNaBQm4xZi6wIDAQAB
+MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAy8yBKM7qsdM/NhsUpjPPwFuhYxTTUmWddJ0J5pIpgVBnFuSBFkTk3AzvYJrFLaHjOahEbs6/WaRuR2TOgbtJi1SEcwNk/mArwGpeTzOGo3g6chiy4ScmEtHTK5+18Mz5+NDhQ6S23joDm6zpQLM2yoNIUDMCPctlb3IiuZl2LKqOCdqCiBExORGKkDKlU8UH5hTSc+C8sp0EOx/xoN0UoWVFjd74fu30Vvw4tS0QomUN19L0VMrS14HmOFbJQaEMGIWmP2hJhGjFd8GTqQmN6OJzeM3cG/VdYfAyeY9yBMxtGTkSvuqVH2NIEPnACtHU3IfGpRCk7GsQ9fJc4BB6yQIDAQAB
 -----END PUBLIC KEY-----`,
     ignoreExpiration: true,
     issuer: "https://keycloak.gawron.cloud/realms/webentwicklung"
@@ -37,6 +37,7 @@ MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEA3lj+kx6JNoTrFnAIs0S9iW6IsXWWdT5jabhN
 
 const TOKEN_URL = "https://keycloak.gawron.cloud/realms/webentwicklung/protocol/openid-connect/token"
 
+const PORT = process.env.PORT || 3000;
 
 const swaggerOptions = {
     swaggerDefinition: {
@@ -48,7 +49,7 @@ const swaggerOptions = {
         },
         servers: [
             {
-                url: 'http://localhost:3000',
+                url: `https://${process.env.CODESPACE_NAME}-${PORT}.app.github.dev/`,
             },
         ],
         components: {
@@ -90,7 +91,7 @@ const swaggerOptions = {
     apis: ['./index.js'],
 };
 
-const PORT = process.env.PORT || 3000;
+
 
 /** Zentrales Objekt für unsere Express-Applikation */
 const app = express();
@@ -105,7 +106,7 @@ app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerDocs));
 passport.use(
     new JwtStrategy(opts, (payload, done) => {
         // Hier können Sie zusätzliche Validierungen oder Benutzerabfragen durchführen, falls erforderlich
-        //console.log("JWT payload: %o", payload)
+        console.log("JWT payload: %o", payload)
         return done(null, payload);
     })
 );
@@ -139,6 +140,12 @@ const todoValidationRules = [
         .withMessage('Status muss eine Zahl sein')
 ];
 
+const postValidation = [
+    ...todoValidationRules,
+    check('_id')
+        .not().exists()
+        .withMessage('_id darf beim Erstellen nicht gesetzt sein')
+]
 
 /** Middleware for authentication via JWT */
 let authenticate = (req, res, next) => passport.authenticate('jwt',
@@ -177,7 +184,7 @@ app.get('/oauth_callback', async (req, res) => {
     data.append("client_id", "todo-backend")
     data.append("grant_type", "authorization_code")
     data.append("code", code)
-    
+
     fetch(TOKEN_URL, {
         method: "POST",
         body: data
@@ -293,8 +300,8 @@ app.get('/todos/:id', authenticate,
  *     required: true
  *     content:
  *      application/json:
- *      schema:
- *       $ref: '#/components/schemas/Todo'
+ *        schema:
+ *          $ref: '#/components/schemas/Todo'
  *    responses:
  *    '200':
  *     description: Das aktualisierte Todo
@@ -363,7 +370,7 @@ app.put('/todos/:id', authenticate, todoValidationRules,
  *     '500':
  *       description: Serverfehler
  */
-app.post('/todos', authenticate, todoValidationRules,
+app.post('/todos', authenticate, postValidation,
     async (req, res) => {
         const result = validationResult(req);
         console.log(result);
