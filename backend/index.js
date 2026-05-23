@@ -7,7 +7,7 @@ import swaggerJsdoc from 'swagger-jsdoc';
 import passport from 'passport';
 import { Strategy as JwtStrategy, ExtractJwt } from 'passport-jwt';
 
-import { check, validationResult } from 'express-validator';
+import { check, validationResult, param } from 'express-validator';
 import cookieParser from 'cookie-parser';
 import { getRandomValues } from 'crypto';
 
@@ -133,6 +133,14 @@ app.use(passport.initialize());
 /** global instance of our database */
 let db = new DB();
 
+function handleInvalidObjectId(err, res) {
+    if (err.message === 'InvalidObjectId') {
+        res.status(400).send({ error: 'Ungültige ID' });
+        return true;
+    }
+    return false;
+}
+
 /** Initialize database connection */
 async function initDB() {
     await db.connect();
@@ -154,6 +162,18 @@ const todoValidationRules = [
         .optional()
         .isInt()
         .withMessage('Status muss eine Zahl sein')
+];
+
+const isValidObjectId = value => typeof value === 'string' && /^[0-9a-fA-F]{24}$/.test(value);
+
+const idValidationRules = [
+    param('id')
+        .custom(value => {
+            if (!isValidObjectId(value)) {
+                throw new Error('Ungültige Todo-ID');
+            }
+            return true;
+        })
 ];
 
 const postValidation = [
@@ -203,7 +223,7 @@ app.get('/oauth_callback', async (req, res) => {
     }
     else {
         console.log("state %s not in state_dict %j, XSRF?", state, state_dict)
-        res.sendStatus(400, { error: `state ${state} not in state_dict, XSRF?` })
+        res.status(400).send({ error: `state ${state} not in state_dict, XSRF?` })
         return
     }
     let data = new URLSearchParams()
@@ -289,7 +309,7 @@ app.get('/todos', authenticate,
  *     '500':
  *        description: Serverfehler
  */
-app.get('/todos/:id', authenticate,
+app.get('/todos/:id', authenticate, idValidationRules,
     async (req, res) => {
         let id = req.params.id;
         return db.queryById(id)
@@ -302,6 +322,7 @@ app.get('/todos/:id', authenticate,
             })
             .catch(err => {
                 console.log(err);
+                if (handleInvalidObjectId(err, res)) return;
                 res.sendStatus(500);
             });
     }
@@ -344,7 +365,7 @@ app.get('/todos/:id', authenticate,
  *    '500':
  *      description: Serverfehler
  */
-app.put('/todos/:id', authenticate, todoValidationRules,
+app.put('/todos/:id', authenticate, [...idValidationRules, ...todoValidationRules],
     async (req, res) => {
         let id = req.params.id;
         const result = validationResult(req);
@@ -354,11 +375,16 @@ app.put('/todos/:id', authenticate, todoValidationRules,
             return;
         }
         let todo = req.body;
-        if (todo._id !== id) {
-            console.log("id in body does not match id in path: %s != %s", todo._id, id);
-            res.sendStatus(400, "{ message: id in body does not match id in path}");
+        if (!todo) {
+            res.status(400).send({ message: 'Todo fehlt' });
             return;
         }
+        if (todo._id !== undefined && todo._id !== id) {
+            console.log("id in body does not match id in path: %s != %s", todo._id, id);
+            res.status(400).send({ message: 'id in body does not match id in path' });
+            return;
+        }
+        todo._id = id;
         return db.update(id, todo)
             .then(todo => {
                 if (todo) {
@@ -369,6 +395,7 @@ app.put('/todos/:id', authenticate, todoValidationRules,
             })
             .catch(err => {
                 console.log("error updating todo: %s, %o, %j", id, todo, err);
+                if (handleInvalidObjectId(err, res)) return;
                 res.sendStatus(500);
             })
     });
@@ -408,7 +435,7 @@ app.post('/todos', authenticate, postValidation,
         }
         let todo = req.body;
         if (!todo) {
-            res.sendStatus(400, { message: "Todo fehlt" });
+            res.status(400).send({ message: "Todo fehlt" });
             return;
         }
         return db.insert(todo)
@@ -443,7 +470,7 @@ app.post('/todos', authenticate, postValidation,
  *        '500':
  *          description: Serverfehler
  */
-app.delete('/todos/:id', authenticate,
+app.delete('/todos/:id', authenticate, idValidationRules,
     async (req, res) => {
         let id = req.params.id;
         return db.delete(id)
@@ -456,6 +483,7 @@ app.delete('/todos/:id', authenticate,
             })
             .catch(err => {
                 console.log(err);
+                if (handleInvalidObjectId(err, res)) return;
                 res.sendStatus(500);
             });
     }

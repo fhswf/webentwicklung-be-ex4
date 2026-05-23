@@ -3,32 +3,40 @@ import { MongoClient, ObjectId } from 'mongodb';
 const MONGO_URI = process.env.MONGO_URI || 'mongodb://localhost:27017/todos';
 const MONGO_DB = process.env.MONGO_DB || 'todos';
 
-let db = null;
-let collection = null;
-let client = null;
-
 export default class DB {
+    constructor() {
+        this.client = null;
+        this.db = null;
+        this.collection = null;
+    }
 
     /** Connect to MongoDB and open client */
     connect() {
         return MongoClient.connect(MONGO_URI)
-            .then(function (_client) {
-                client = _client;
-                db = client.db(MONGO_DB);
-                collection = db.collection('todos');
+            .then((_client) => {
+                this.client = _client;
+                this.db = this.client.db(MONGO_DB);
+                this.collection = this.db.collection('todos');
             })
+    }
+
+    _ensureObjectId(id) {
+        if (!ObjectId.isValid(id)) {
+            throw new Error('InvalidObjectId');
+        }
+        return new ObjectId(id);
     }
 
     /** Close client connection to MongoDB */
     close() {
-        return client.close()
+        return this.client.close()
     }
 
     /** Get all todos 
      * @returns {Promise} - Promise with all todos
      */
     queryAll() {
-        return collection.find().toArray();
+        return this.collection.find().toArray();
     }
 
     /** Get todo by id 
@@ -36,8 +44,8 @@ export default class DB {
      * @returns {Promise} - Promise with todo
      */
     queryById(id) {
-        let _id = new ObjectId(id);
-        return collection.findOne({ _id });
+        let _id = this._ensureObjectId(id);
+        return this.collection.findOne({ _id });
     }
 
     /** Update todo by id
@@ -45,11 +53,9 @@ export default class DB {
      * @returns {Promise} - Promise with updated todo
      */
     update(id, todo) {
-        let _id = new ObjectId(id);
-        if (typeof todo._id === 'string') {
-            todo._id = _id;
-        }
-        return collection
+        let _id = this._ensureObjectId(id);
+        todo._id = _id;
+        return this.collection
             .replaceOne({ _id }, todo)
             .then(result => {
                 if (result.modifiedCount === 1 || result.matchedCount === 1) {
@@ -71,8 +77,8 @@ export default class DB {
      * @returns {Promise} - Promise with deleted todo
      */
     delete(id) {
-        let _id = new ObjectId(id);
-        return collection.findOneAndDelete({ _id })
+        let _id = this._ensureObjectId(id);
+        return this.collection.findOneAndDelete({ _id })
             .then(result => {
                 if (result.ok) {
                     return result.value;
@@ -89,7 +95,7 @@ export default class DB {
      * @returns {Promise} - Promise with inserted todo
      */
     insert(todo) {
-        return collection
+        return this.collection
             .insertOne(todo)
             .then(result => {
                 if (result.acknowledged) {
