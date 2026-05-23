@@ -74,6 +74,22 @@ const swaggerOptions = {
                         },
                     },
                 },
+                TodoInput: {
+                    type: 'object',
+                    properties: {
+                        title: {
+                            type: 'string',
+                            example: 'Für die Klausur Webentwicklung lernen',
+                        },
+                        due: {
+                            type: 'string',
+                            example: '2023-01-14T00:00:00.000Z',
+                        },
+                        status: {
+                            type: 'integer',
+                        },
+                    },
+                },
             },
             securitySchemes: {
                 bearerAuth: {
@@ -142,6 +158,18 @@ const todoValidationRules = [
 
 const postValidation = [
     ...todoValidationRules,
+    check('due')
+        .optional()
+        .custom(value => {
+            const dueDate = new Date(value);
+            if (isNaN(dueDate.getTime())) {
+                throw new Error('Ungültiges Datum');
+            }
+            if (dueDate <= new Date()) {
+                throw new Error('Fälligkeitsdatum muss in der Zukunft liegen');
+            }
+            return true;
+        }),
     check('_id')
         .not().exists()
         .withMessage('_id darf beim Erstellen nicht gesetzt sein')
@@ -357,7 +385,7 @@ app.put('/todos/:id', authenticate, todoValidationRules,
  *     content:
  *       application/json:
  *        schema:
- *         $ref: '#/components/schemas/Todo'
+ *         $ref: '#/components/schemas/TodoInput'
  *   responses:
  *     '201':
  *       description: Das erstellte Todo
