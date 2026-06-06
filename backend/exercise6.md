@@ -1,37 +1,41 @@
-# Aufgabe 6: Testfälle für das Backend mit Jest
+# Aufgabe 6: Testfälle für das Backend mit Vitest
 
 Es sieht so aus, als hätten Sie in diesem Repository möglicherweise noch keine Tests eingerichtet. In dieser Aufgabe richten Sie automatisierte Tests für Ihr Express-Backend ein und schreiben erste Testfälle.
 
 ## Aufgabe 1.1: Testframework auswählen und installieren
 
-Wir verwenden das Testframework **Jest**, da es einfach einzurichten ist und gut mit Node.js/Express zusammenarbeitet. Zusätzlich verwenden wir **Supertest**, um HTTP-Anfragen an unsere Express-App zu senden und die Antworten zu überprüfen.
+Wir verwenden das Testframework **Vitest**, da es hervorragend und nativ mit ES-Modulen (ESM) zusammenarbeitet, extrem schnell ist und keine experimentellen VM-Flags benötigt. Zusätzlich verwenden wir **Supertest**, um HTTP-Anfragen an unsere Express-App zu senden und die Antworten zu überprüfen.
 
-1. Installieren Sie Jest und Supertest als Entwicklungsabhängigkeiten:
+1. Installieren Sie Vitest und Supertest als Entwicklungsabhängigkeiten:
 
     ```bash
-    npm install --save-dev jest supertest axios
+    npm install --save-dev vitest supertest
     ```
 
 2. Fügen Sie in Ihrer `package.json`-Datei ein Test-Skript hinzu:
 
    ```json
     "scripts": {
-      "test": "NODE_OPTIONS='--experimental-vm-modules' jest"
+      "test": "vitest run"
     }
     ```
 
-3. Erstellen Sie eine Datei `jest.config.js` im Stammverzeichnis Ihres Projekts mit folgendem Inhalt:
+3. Erstellen Sie eine Datei `vitest.config.js` im Stammverzeichnis Ihres Projekts mit folgendem Inhalt, um globale Testfunktionen zu aktivieren (damit Funktionen wie `describe`, `it`, `expect` etc. wie gewohnt global verfügbar sind):
 
     ```js
-    export default {
-        testEnvironment: 'node',
-        testMatch: ['**/tests/**/*.test.js'],
-    };
+    import { defineConfig } from 'vitest/config';
+
+    export default defineConfig({
+        test: {
+            globals: true,
+            environment: 'node',
+        },
+    });
     ```
 
 ## Aufgabe 1.2: Anpassungen an der Anwendung
 
-An der Anwendung müssen wir ein paar kleine Änderungen vornehmen, damit wir sie mit `supertest` und `jest` testen können. Supertest benötigt Zugriff auf das `app` 
+An der Anwendung müssen wir ein paar kleine Änderungen vornehmen, damit wir sie mit `supertest` und `vitest` testen können. Supertest benötigt Zugriff auf das `app` 
 Objekt und muss in der Lage sein, nach den Tests die Anwendung zu beenden. Dazu brauchen
 wir Zugriff auf den gestarteten Server und die Datenbank. 
 Ändern Sie dazu den Code am Ende der Datei `index.js` wie folgt ab:
@@ -109,7 +113,7 @@ beforeAll(async () => {
 ```
 
 ## Aufgabe 2: Ersten Test schreiben & ausführen
-1. Legen Sie im Verzeichnis `backend/tests` eine Datei `index.test.mjs` an.
+1. Legen Sie im Verzeichnis `backend/tests` eine Datei `index.test.js` an.
 2. Schreiben Sie einen ersten Beispiel-test, der überprüft, ob die Express-App korrekt läuft:
 
     ```javascript   
