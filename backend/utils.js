@@ -13,12 +13,12 @@ async function getKeycloakToken() {
 
     try {
         const response = await axios.post(tokenEndpoint,
-            {
+            qs.stringify({
                 'grant_type': 'password',
                 'client_id': keycloakConfig.clientId,
                 'username': 'public',
                 'password': 'todo',
-            },
+            }),
             {
                 headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
             });
