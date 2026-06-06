@@ -161,7 +161,16 @@ const todoValidationRules = [
     check('status')
         .optional()
         .isInt()
-        .withMessage('Status muss eine Zahl sein')
+        .withMessage('Status muss eine Zahl sein'),
+    // No additional properties allowed
+    check().custom((value, { req }) => {
+        const allowedFields = ['title', 'due', 'status', '_id'];
+        const extraFields = Object.keys(req.body).filter(key => !allowedFields.includes(key));
+        if (extraFields.length > 0) {
+            throw new Error(`Unerwartete Felder: ${extraFields.join(', ')}`);
+        }
+        return true;
+    })
 ];
 
 const isValidObjectId = value => typeof value === 'string' && /^[0-9a-fA-F]{24}$/.test(value);
@@ -430,6 +439,7 @@ app.post('/todos', authenticate, postValidation,
         const result = validationResult(req);
         console.log(result);
         if (!result.isEmpty()) {
+
             res.status(400).send(result.array());
             return;
         }

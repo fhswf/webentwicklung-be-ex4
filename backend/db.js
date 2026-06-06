@@ -28,8 +28,19 @@ export default class DB {
     }
 
     /** Close client connection to MongoDB */
-    close() {
-        return this.client.close()
+    async close() {
+        console.log('Closing MongoDB connection');
+        if (this.client) {
+            try {
+                const client = this.client;
+                this.client = null;
+                this.db = null;
+                this.collection = null;
+                await client.close();
+            } catch (err) {
+                console.error('Error closing MongoDB client:', err);
+            }
+        }
     }
 
     /** Get all todos 

@@ -1,6 +1,6 @@
 async function getAuthToken() {
     const keycloakConfig = {
-        baseUrl: 'https://jupiter.fh-swf.de/keycloak',
+        baseUrl: 'https://keycloak.gawron.cloud',
         realm: 'webentwicklung',
         clientId: 'todo-backend',
     };
@@ -31,4 +31,4 @@ async function getAuthToken() {
     }
 }
 
-export default getKeycloakToken
+export default getAuthToken
