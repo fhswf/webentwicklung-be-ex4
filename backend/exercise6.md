@@ -1,4 +1,4 @@
-# Automatisierte Tests für das Backend
+# Aufgabe 6: Testfälle für das Backend mit Vitest
 
 In diesem Praktikum wollen wir automatisierte Tests für unser Backend erstellen. Dazu verwenden wir die Pakete
 [Jest](https://jestjs.io/docs/getting-started) und [Supertest](https://github.com/visionmedia/supertest).
@@ -7,18 +7,38 @@ In diesem Praktikum wollen wir automatisierte Tests für unser Backend erstellen
 entwickelt wurde. 
 ***Supertest*** ist ein Testframework speziell für das Testen von HTTP-Services. Die Besonderheit von Supertest ist, dass es sich selbst um das Starten des Servers kümmert (s.u.).
 
-Da unsere Anwendung eine Autorisierung mit JWTs vorsieht, benötigen wir zusätzlich noch 
-das Paket ***axios*** zum Ausführen von HTTP-Requests zu unserem Keycloak-Server.
+Wir verwenden das Testframework **Vitest**, da es hervorragend und nativ mit ES-Modulen (ESM) zusammenarbeitet, extrem schnell ist und keine experimentellen VM-Flags benötigt. Zusätzlich verwenden wir **Supertest**, um HTTP-Anfragen an unsere Express-App zu senden und die Antworten zu überprüfen.
 
-## Aufgabe 1.1 Setup
+1. Installieren Sie Vitest und Supertest als Entwicklungsabhängigkeiten:
 
-Zunächst installieren Sie die notwendigen Pakete:
+    ```bash
+    npm install --save-dev vitest supertest
+    ```
 
-```
-npm install --save-dev jest supertest axios
-```
+2. Fügen Sie in Ihrer `package.json`-Datei ein Test-Skript hinzu:
 
-An der Anwendung müssen wir ein paar kleine Änderungen vornehmen, damit wir sie mit `supertest` und `jest` testen können. Supertest benötigt Zugriff auf das `app` 
+   ```json
+    "scripts": {
+      "test": "vitest run"
+    }
+    ```
+
+3. Erstellen Sie eine Datei `vitest.config.js` im Stammverzeichnis Ihres Projekts mit folgendem Inhalt, um globale Testfunktionen zu aktivieren (damit Funktionen wie `describe`, `it`, `expect` etc. wie gewohnt global verfügbar sind):
+
+    ```js
+    import { defineConfig } from 'vitest/config';
+
+    export default defineConfig({
+        test: {
+            globals: true,
+            environment: 'node',
+        },
+    });
+    ```
+
+## Aufgabe 1.2: Anpassungen an der Anwendung
+
+An der Anwendung müssen wir ein paar kleine Änderungen vornehmen, damit wir sie mit `supertest` und `vitest` testen können. Supertest benötigt Zugriff auf das `app` 
 Objekt und muss in der Lage sein, nach den Tests die Anwendung zu beenden. Dazu brauchen
 wir Zugriff auf den gestarteten Server und die Datenbank. 
 Ändern Sie dazu den Code am Ende der Datei `index.js` wie folgt ab:
@@ -187,6 +207,7 @@ describe('GET /todos', () => {
 ```
 
 Jetzt sollten Ihre Tests den JWT-Token in den Authorization-Headern verwenden, um geschützte Routen zu testen. Stellen Sie sicher, dass Sie den Authorization-Header zu allen Testanfragen hinzufügen, die geschützte Routen betreffen.
+
 
 ## Aufgabe 2: Weitere Testfälle
 
