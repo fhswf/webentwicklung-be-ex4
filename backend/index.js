@@ -58,18 +58,23 @@ const swaggerOptions = {
                     properties: {
                         _id: {
                             type: 'string',
+                            description: 'MongoDB ID',
                             example: '6439519dadb77c080671a573',
                         },
                         title: {
                             type: 'string',
+                            description: 'Titel des Todos',
                             example: 'Für die Klausur Webentwicklung lernen',
                         },
                         due: {
                             type: 'string',
+                            description: 'Fälligkeitsdatum',
                             example: '2023-01-14T00:00:00.000Z',
                         },
                         status: {
                             type: 'integer',
+                            description: 'Status des Todos',
+                            example: 0,
                         },
                     },
                 },
@@ -203,6 +208,10 @@ app.get('/oauth_callback', async (req, res) => {
  *    summary: Gibt alle Todos zurück
  *    tags: [Todos]
  *    responses:
+ *      '401':
+ *         description: Nicht autorisiert
+ *      '500':
+ *         description: Serverfehler
  *      '200':
  *        description: Eine Liste aller Todos
  *        content:
@@ -279,12 +288,12 @@ app.get('/todos/:id', authenticate,
  *         description: Die ID des Todos
  *         example: 5f9a3b2a9d9b4b2d9c9b3b2a
  *    requestBody:
- *     description: Das Todo
- *     required: true
- *     content:
- *      application/json:
- *      schema:
- *       $ref: '#/components/schemas/Todo'
+ *      description: Das Todo
+ *      required: true
+ *      content:
+ *        application/json:
+ *         schema:
+ *           $ref: '#/components/schemas/Todo'
  *    responses:
  *    '200':
  *     description: Das aktualisierte Todo
@@ -407,7 +416,7 @@ app.delete('/todos/:id', authenticate,
 
 
 let server;
-initDB()
+await initDB()
     .then(() => {
         server = app.listen(PORT, () => {
             console.log(`Server listening on port ${PORT}`);
