@@ -4,7 +4,7 @@ let todos = [];
 const status = ["offen", "in Bearbeitung", "erledigt"];
 
 const API = "/todos"
-const LOGIN_URL = "https://jupiter.fh-swf.de/keycloak/realms/webentwicklung/protocol/openid-connect/auth"
+const LOGIN_URL = "https://keycloak.gawron.cloud/realms/webentwicklung/protocol/openid-connect/auth"
 
 function createTodoElement(todo) {
     let list = document.getElementById("todo-list");
@@ -12,9 +12,9 @@ function createTodoElement(todo) {
     list.insertAdjacentHTML("beforeend",
         `<div>${todo.title}</div> 
          <div>${due.toLocaleDateString()}</div>
-         <button class="status" onclick="changeStatus(${todo.id})">${status[todo.status || 0]}</button>
-         <button class="edit" onclick="editTodo(${todo.id})">Bearbeiten</button>
-         <button class="delete" onclick="deleteTodo(${todo.id})">Löschen</button>`);
+         <button class="status" onclick="changeStatus('${todo._id}')">${status[todo.status || 0]}</button>
+         <button class="edit" onclick="editTodo('${todo._id}')">Bearbeiten</button>
+         <button class="delete" onclick="deleteTodo('${todo._id}')">Löschen</button>`);
 }
 
 function showTodos() {
@@ -58,31 +58,79 @@ function saveTodo(evt) {
     evt.preventDefault();
 
     // Get the id from the form. If it is not set, we are creating a new todo.
-    let id = Number.parseInt(evt.target.dataset.id) || Date.now();
+    let id = evt.target.dataset._id || "";
+    console.log("Saving todo with id: %s", id);
 
     let todo = {
-        id,
+        _id: id,
         title: evt.target.title.value,
         due: evt.target.due.valueAsDate,
         status: Number.parseInt(evt.target.status.value) || 0
     }
 
-    let index = todos.findIndex(t => t.id === todo.id);
-    if (index >= 0) {
-        todos[index] = todo;
+    let index = todos.findIndex(t => t._id === id);
+    if (id && index >= 0) {
         console.log("Updating todo: %o", todo);
+        fetch(API + "/" + id, {
+            method: "PUT",
+            headers: {
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify(todo)
+        })
+            .then(response => {
+                console.log("PUT %s: %o", API + "/" + id, response)
+                if (response.status != 200) throw response;
+                return response.json()
+            })
+            .then(response => {
+                todos[index] = response
+                console.log("Updated todo: %o", todo)
+                showTodos()
+            })
+            .catch(err => {
+                console.log("PUT %s failed: %o", API + "/" + id, err)
+                return err.json()
+            })
+            .then(err => {
+                console.log("Error: %o", err)
+                alert("Fehler beim Speichern des Todos: " + err.map(f => f.msg) + "\nBitte versuchen Sie es erneut.")
+            })
     } else {
-        todos.push(todo);
         console.log("Saving new todo: %o", todo);
+        delete todo._id;
+        fetch(API, {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify(todo)
+        })
+            .then(response => {
+                console.log("POST %s: %o", API, response)
+                if (response.status != 201) throw response;
+                return response.json()
+            })
+            .then(response => {
+                todo = response
+                console.log("Saved todo: %o", todo)
+                todos.push(todo);
+                showTodos();
+            })
+            .catch(err => {
+                console.log("POST %s failed: %o", API, err)
+                return err.json()
+            })
+            .then(err => {
+                console.log("Error: %o", err)
+                alert("Fehler beim Speichern des Todos: " + err.map(f => f.msg) + "\nBitte versuchen Sie es erneut.")
+            })
     }
-
-    showTodos();
     evt.target.reset();
-    localStorage.setItem("todos", JSON.stringify(todos));
 }
 
 function editTodo(id) {
-    let todo = todos.find(t => t.id === id);
+    let todo = todos.find(t => t._id === id);
     console.log("Editing todo: %o", todo);
     if (todo) {
         let form = document.getElementById("todo-form");
@@ -90,31 +138,61 @@ function editTodo(id) {
         form.due.valueAsDate = new Date(todo.due);
         form.status.value = todo.status;
         form.submit.value = "Änderungen speichern";
-        form.dataset.id = todo.id;
+        form.dataset._id = todo._id;
     }
 }
 
 function deleteTodo(id) {
-    let todo = todos.find(t => t.id === id);
+    let todo = todos.find(t => t._id === id);
     console.log("Deleting todo: %o", todo);
-    if (todo) {
-        todos = todos.filter(t => t.id !== id);
-        showTodos();
-        saveTodos();
-    }
+    fetch(API + "/" + id, {
+        method: "DELETE"
+    })
+        .then(response => {
+            console.log("DELETE %s: %o", API + "/" + id, response)
+            if (response.status != 204) throw ("DELETE failed")
+        })
+        .then(response => {
+            todos = todos.filter(t => t._id !== id)
+            console.log("Deleted todo: %o", response)
+            showTodos();
+        })
+        .catch(err => {
+            console.log("DELETE %s failed: %o", API + "/" + id, err)
+        })
 }
 
 function changeStatus(id) {
-    let todo = todos.find(t => t.id === id);
-    console.log("Changing status of todo: %o", todo);
+    let index = todos.findIndex(t => t._id === id);
+    let todo = todos[index];
+    console.log("Changing status of todo: %s, %o", id, todo);
     if (todo) {
         todo.status = (todo.status + 1) % status.length;
-        showTodos();
-        saveTodos();
+        fetch(API + "/" + id, {
+            method: "PUT",
+            headers: {
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify(todo)
+        })
+            .then(response => {
+                console.log("PUT %s: %o", API + "/" + id, response)
+                return response.json()
+            })
+            .then(response => {
+                todos[index] = response
+                console.log("Updated todo: %o", todo)
+                showTodos();
+            })
+            .catch(err => {
+                console.log("PUT %s failed: %o", API + "/" + id, err)
+            })
+
     }
 }
 
 function loadTodos() {
+    console.log("loading todos")
     return fetch(API)
         .then(checkLogin)
         .then(response => response.json())
@@ -128,9 +206,6 @@ function loadTodos() {
         })
 }
 
-function saveTodos() {
-    localStorage.setItem("todos", JSON.stringify(todos));
-}
 
 /** Check whether we need to login.
  * Check the status of a response object. If the status is 401, construct an appropriate 

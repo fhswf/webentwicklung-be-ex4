@@ -7,7 +7,7 @@ import swaggerJsdoc from 'swagger-jsdoc';
 import passport from 'passport';
 import { Strategy as JwtStrategy, ExtractJwt } from 'passport-jwt';
 
-import { check, validationResult } from 'express-validator';
+import { check, validationResult, param } from 'express-validator';
 import cookieParser from 'cookie-parser';
 import { getRandomValues } from 'crypto';
 
@@ -25,18 +25,19 @@ const opts = {
                 token = req.cookies.token
             }
         }
-        //console.log("token: %s", token)
+        console.log("token: %s", token)
         return token
     },
     secretOrKey: `-----BEGIN PUBLIC KEY-----
-MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAyn2vP592Ju/iKXQW1DCrSTXyQXyo11Qed1SdzFWC+mRtdgioKibzYMBt2MfAJa6YoyrVNgOtGvK659MjHALtotPQGmis1VVvBeMFdfh+zyFJi8NPqgBTXz6bQfnu85dbxVAg95J+1Ud0m4IUXME1ElOyp1pi88+w0C6ErVcFCyEDS3uAajBY6vBIuPrlokbl6RDcvR9zX85s+R/s7JeP1XV/e8gbnYgZwxcn/6+7moHPDl4LqvVDKnDq9n4W6561s8zzw8EoAwwYXUC3ZPe2/3DcUCh+zTF2nOy8HiN808CzqLq1VeD13q9DgkAmBWFNSaXb6vK6RIQ9+zr2cwdXiwIDAQAB
+MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAy8yBKM7qsdM/NhsUpjPPwFuhYxTTUmWddJ0J5pIpgVBnFuSBFkTk3AzvYJrFLaHjOahEbs6/WaRuR2TOgbtJi1SEcwNk/mArwGpeTzOGo3g6chiy4ScmEtHTK5+18Mz5+NDhQ6S23joDm6zpQLM2yoNIUDMCPctlb3IiuZl2LKqOCdqCiBExORGKkDKlU8UH5hTSc+C8sp0EOx/xoN0UoWVFjd74fu30Vvw4tS0QomUN19L0VMrS14HmOFbJQaEMGIWmP2hJhGjFd8GTqQmN6OJzeM3cG/VdYfAyeY9yBMxtGTkSvuqVH2NIEPnACtHU3IfGpRCk7GsQ9fJc4BB6yQIDAQAB
 -----END PUBLIC KEY-----`,
     ignoreExpiration: true,
-    issuer: "https://jupiter.fh-swf.de/keycloak/realms/webentwicklung"
+    issuer: "https://keycloak.gawron.cloud/realms/webentwicklung"
 };
 
-const TOKEN_URL = "https://jupiter.fh-swf.de/keycloak/realms/webentwicklung/protocol/openid-connect/token"
+const TOKEN_URL = "https://keycloak.gawron.cloud/realms/webentwicklung/protocol/openid-connect/token"
 
+const PORT = process.env.PORT || 3000;
 
 const swaggerOptions = {
     swaggerDefinition: {
@@ -48,7 +49,7 @@ const swaggerOptions = {
         },
         servers: [
             {
-                url: 'http://localhost:3000',
+                url: `https://${process.env.CODESPACE_NAME}-${PORT}.app.github.dev/`,
             },
         ],
         components: {
@@ -78,6 +79,22 @@ const swaggerOptions = {
                         },
                     },
                 },
+                TodoInput: {
+                    type: 'object',
+                    properties: {
+                        title: {
+                            type: 'string',
+                            example: 'Für die Klausur Webentwicklung lernen',
+                        },
+                        due: {
+                            type: 'string',
+                            example: '2023-01-14T00:00:00.000Z',
+                        },
+                        status: {
+                            type: 'integer',
+                        },
+                    },
+                },
             },
             securitySchemes: {
                 bearerAuth: {
@@ -95,7 +112,7 @@ const swaggerOptions = {
     apis: ['./index.js'],
 };
 
-const PORT = process.env.PORT || 3000;
+
 
 /** Zentrales Objekt für unsere Express-Applikation */
 const app = express();
@@ -110,7 +127,7 @@ app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerDocs));
 passport.use(
     new JwtStrategy(opts, (payload, done) => {
         // Hier können Sie zusätzliche Validierungen oder Benutzerabfragen durchführen, falls erforderlich
-        //console.log("JWT payload: %o", payload)
+        console.log("JWT payload: %o", payload)
         return done(null, payload);
     })
 );
@@ -120,6 +137,14 @@ app.use(passport.initialize());
 
 /** global instance of our database */
 let db = new DB();
+
+function handleInvalidObjectId(err, res) {
+    if (err.message === 'InvalidObjectId') {
+        res.status(400).send({ error: 'Ungültige ID' });
+        return true;
+    }
+    return false;
+}
 
 /** Initialize database connection */
 async function initDB() {
@@ -134,14 +159,61 @@ const todoValidationRules = [
         .withMessage('Titel darf nicht leer sein')
         .isLength({ min: 3 })
         .withMessage('Titel muss mindestens 3 Zeichen lang sein'),
+    check('due')
+        .optional()
+        .isISO8601()
+        .withMessage('Ungültiges Datum'),
+    check('status')
+        .optional()
+        .isInt()
+        .withMessage('Status muss eine Zahl sein'),
+    // No additional properties allowed
+    check().custom((value, { req }) => {
+        const allowedFields = ['title', 'due', 'status', '_id'];
+        const extraFields = Object.keys(req.body).filter(key => !allowedFields.includes(key));
+        if (extraFields.length > 0) {
+            throw new Error(`Unerwartete Felder: ${extraFields.join(', ')}`);
+        }
+        return true;
+    })
 ];
 
+const isValidObjectId = value => typeof value === 'string' && /^[0-9a-fA-F]{24}$/.test(value);
+
+const idValidationRules = [
+    param('id')
+        .custom(value => {
+            if (!isValidObjectId(value)) {
+                throw new Error('Ungültige Todo-ID');
+            }
+            return true;
+        })
+];
+
+const postValidation = [
+    ...todoValidationRules,
+    check('due')
+        .optional()
+        .custom(value => {
+            const dueDate = new Date(value);
+            if (isNaN(dueDate.getTime())) {
+                throw new Error('Ungültiges Datum');
+            }
+            if (dueDate <= new Date()) {
+                throw new Error('Fälligkeitsdatum muss in der Zukunft liegen');
+            }
+            return true;
+        }),
+    check('_id')
+        .not().exists()
+        .withMessage('_id darf beim Erstellen nicht gesetzt sein')
+]
 
 /** Middleware for authentication via JWT */
 let authenticate = (req, res, next) => passport.authenticate('jwt',
     { session: false },
     (err, user, info) => {
-        //console.log("authenticate: %j %j %j", err, user, info)
+        console.log("authenticate: %j %j %j", err, user, info)
         if (!user) {
             let data = new Uint8Array(16);
             getRandomValues(data);
@@ -165,14 +237,16 @@ app.get('/oauth_callback', async (req, res) => {
     }
     else {
         console.log("state %s not in state_dict %j, XSRF?", state, state_dict)
-        res.sendStatus(400, { error: `state ${state} not in state_dict, XSRF?` })
+        res.status(400).send({ error: `state ${state} not in state_dict, XSRF?` })
         return
     }
     let data = new URLSearchParams()
+    const HOST = `${process.env.CODESPACE_NAME}-${PORT}.app.github.dev`
+    data.append("redirect_uri", `https://${HOST}/oauth_callback`)
     data.append("client_id", "todo-backend")
     data.append("grant_type", "authorization_code")
     data.append("code", code)
-    data.append("redirect_uri", "http://localhost:3000/oauth_callback")
+
     fetch(TOKEN_URL, {
         method: "POST",
         body: data
@@ -253,7 +327,7 @@ app.get('/todos', authenticate,
  *     '500':
  *        description: Serverfehler
  */
-app.get('/todos/:id', authenticate,
+app.get('/todos/:id', authenticate, idValidationRules,
     async (req, res) => {
         let id = req.params.id;
         return db.queryById(id)
@@ -266,6 +340,7 @@ app.get('/todos/:id', authenticate,
             })
             .catch(err => {
                 console.log(err);
+                if (handleInvalidObjectId(err, res)) return;
                 res.sendStatus(500);
             });
     }
@@ -308,15 +383,26 @@ app.get('/todos/:id', authenticate,
  *    '500':
  *      description: Serverfehler
  */
-app.put('/todos/:id', authenticate,
+app.put('/todos/:id', authenticate, [...idValidationRules, ...todoValidationRules],
     async (req, res) => {
         let id = req.params.id;
-        let todo = req.body;
-        if (todo._id !== id) {
-            console.log("id in body does not match id in path: %s != %s", todo._id, id);
-            res.sendStatus(400, "{ message: id in body does not match id in path}");
+        const result = validationResult(req);
+        console.log(result);
+        if (!result.isEmpty()) {
+            res.status(400).send(result.array());
             return;
         }
+        let todo = req.body;
+        if (!todo) {
+            res.status(400).send({ message: 'Todo fehlt' });
+            return;
+        }
+        if (todo._id !== undefined && todo._id !== id) {
+            console.log("id in body does not match id in path: %s != %s", todo._id, id);
+            res.status(400).send({ message: 'id in body does not match id in path' });
+            return;
+        }
+        todo._id = id;
         return db.update(id, todo)
             .then(todo => {
                 if (todo) {
@@ -327,6 +413,7 @@ app.put('/todos/:id', authenticate,
             })
             .catch(err => {
                 console.log("error updating todo: %s, %o, %j", id, todo, err);
+                if (handleInvalidObjectId(err, res)) return;
                 res.sendStatus(500);
             })
     });
@@ -343,7 +430,7 @@ app.put('/todos/:id', authenticate,
  *     content:
  *       application/json:
  *        schema:
- *         $ref: '#/components/schemas/Todo'
+ *         $ref: '#/components/schemas/TodoInput'
  *   responses:
  *     '201':
  *       description: Das erstellte Todo
@@ -356,11 +443,18 @@ app.put('/todos/:id', authenticate,
  *     '500':
  *       description: Serverfehler
  */
-app.post('/todos', authenticate,
+app.post('/todos', authenticate, postValidation,
     async (req, res) => {
+        const result = validationResult(req);
+        console.log(result);
+        if (!result.isEmpty()) {
+
+            res.status(400).send(result.array());
+            return;
+        }
         let todo = req.body;
         if (!todo) {
-            res.sendStatus(400, { message: "Todo fehlt" });
+            res.status(400).send({ message: "Todo fehlt" });
             return;
         }
         return db.insert(todo)
@@ -395,7 +489,7 @@ app.post('/todos', authenticate,
  *        '500':
  *          description: Serverfehler
  */
-app.delete('/todos/:id', authenticate,
+app.delete('/todos/:id', authenticate, idValidationRules,
     async (req, res) => {
         let id = req.params.id;
         return db.delete(id)
@@ -408,6 +502,7 @@ app.delete('/todos/:id', authenticate,
             })
             .catch(err => {
                 console.log(err);
+                if (handleInvalidObjectId(err, res)) return;
                 res.sendStatus(500);
             });
     }
